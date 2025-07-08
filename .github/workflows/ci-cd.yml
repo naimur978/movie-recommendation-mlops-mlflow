@@ -23,35 +23,20 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-cov flake8
         python -m nltk.downloader punkt
-        python -c "import nltk; nltk.download('punkt')"
         
     - name: Create test dataset
       run: |
         mkdir -p dataset
-        python -c '
-import pandas as pd
-
-# Create test movies dataset
-movies_data = pd.DataFrame({
-    "id": [1, 2],
-    "title": ["Movie 1", "Movie 2"],
-    "genres": ["[{\"id\": 1, \"name\": \"Action\"}]", "[{\"id\": 2, \"name\": \"Drama\"}]"],
-    "keywords": ["[{\"id\": 1, \"name\": \"hero\"}]", "[{\"id\": 2, \"name\": \"family\"}]"],
-    "overview": ["Overview 1", "Overview 2"],
-    "cast": ["[{\"name\": \"Actor 1\"}]", "[{\"name\": \"Actor 2\"}]"],
-    "crew": ["[{\"job\": \"Director\", \"name\": \"Director 1\"}]", "[{\"job\": \"Director\", \"name\": \"Director 2\"}]"]
-})
-
-# Create test credits dataset
-credits_data = pd.DataFrame({
-    "title": ["Movie 1", "Movie 2"],
-    "cast": ["[{\"name\": \"Actor 1\"}]", "[{\"name\": \"Actor 2\"}]"],
-    "crew": ["[{\"job\": \"Director\", \"name\": \"Director 1\"}]", "[{\"job\": \"Director\", \"name\": \"Director 2\"}]"]
-})
-
-movies_data.to_csv("dataset/tmdb_5000_movies.csv", index=False)
-credits_data.to_csv("dataset/tmdb_5000_credits.csv", index=False)
-'
+        cat > dataset/tmdb_5000_movies.csv << 'EOF'
+id,title,genres,keywords,overview,cast,crew
+1,"Movie 1","[{""id"": 1, ""name"": ""Action""}]","[{""id"": 1, ""name"": ""hero""}]","Overview 1","[{""name"": ""Actor 1""}]","[{""job"": ""Director"", ""name"": ""Director 1""}]"
+2,"Movie 2","[{""id"": 2, ""name"": ""Drama""}]","[{""id"": 2, ""name"": ""family""}]","Overview 2","[{""name"": ""Actor 2""}]","[{""job"": ""Director"", ""name"": ""Director 2""}]"
+EOF
+        cat > dataset/tmdb_5000_credits.csv << 'EOF'
+title,cast,crew
+"Movie 1","[{""name"": ""Actor 1""}]","[{""job"": ""Director"", ""name"": ""Director 1""}]"
+"Movie 2","[{""name"": ""Actor 2""}]","[{""job"": ""Director"", ""name"": ""Director 2""}]"
+EOF
         
     - name: Lint with flake8
       run: |
@@ -82,30 +67,16 @@ credits_data.to_csv("dataset/tmdb_5000_credits.csv", index=False)
     - name: Create test dataset
       run: |
         mkdir -p dataset
-        python -c '
-import pandas as pd
-
-# Create test movies dataset
-movies_data = pd.DataFrame({
-    "id": [1, 2],
-    "title": ["Movie 1", "Movie 2"],
-    "genres": ["[{\"id\": 1, \"name\": \"Action\"}]", "[{\"id\": 2, \"name\": \"Drama\"}]"],
-    "keywords": ["[{\"id\": 1, \"name\": \"hero\"}]", "[{\"id\": 2, \"name\": \"family\"}]"],
-    "overview": ["Overview 1", "Overview 2"],
-    "cast": ["[{\"name\": \"Actor 1\"}]", "[{\"name\": \"Actor 2\"}]"],
-    "crew": ["[{\"job\": \"Director\", \"name\": \"Director 1\"}]", "[{\"job\": \"Director\", \"name\": \"Director 2\"}]"]
-})
-
-# Create test credits dataset
-credits_data = pd.DataFrame({
-    "title": ["Movie 1", "Movie 2"],
-    "cast": ["[{\"name\": \"Actor 1\"}]", "[{\"name\": \"Actor 2\"}]"],
-    "crew": ["[{\"job\": \"Director\", \"name\": \"Director 1\"}]", "[{\"job\": \"Director\", \"name\": \"Director 2\"}]"]
-})
-
-movies_data.to_csv("dataset/tmdb_5000_movies.csv", index=False)
-credits_data.to_csv("dataset/tmdb_5000_credits.csv", index=False)
-'
+        cat > dataset/tmdb_5000_movies.csv << 'EOF'
+id,title,genres,keywords,overview,cast,crew
+1,"Movie 1","[{""id"": 1, ""name"": ""Action""}]","[{""id"": 1, ""name"": ""hero""}]","Overview 1","[{""name"": ""Actor 1""}]","[{""job"": ""Director"", ""name"": ""Director 1""}]"
+2,"Movie 2","[{""id"": 2, ""name"": ""Drama""}]","[{""id"": 2, ""name"": ""family""}]","Overview 2","[{""name"": ""Actor 2""}]","[{""job"": ""Director"", ""name"": ""Director 2""}]"
+EOF
+        cat > dataset/tmdb_5000_credits.csv << 'EOF'
+title,cast,crew
+"Movie 1","[{""name"": ""Actor 1""}]","[{""job"": ""Director"", ""name"": ""Director 1""}]"
+"Movie 2","[{""name"": ""Actor 2""}]","[{""job"": ""Director"", ""name"": ""Director 2""}]"
+EOF
         
     - name: Train and validate model
       run: |
