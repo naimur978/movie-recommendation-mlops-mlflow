@@ -8,12 +8,17 @@ __pycache__/
 mlruns/
 mlflow.db
 
-# Model artifacts
+# Generated files
+models/
+recommendations.csv
 *.npy
 *.pkl
 
-# macOS
+# IDE and OS
 .DS_Store
-
-# VS Code
 .vscode/
+.idea/
+
+# Environment
+*.env
+.python-version
