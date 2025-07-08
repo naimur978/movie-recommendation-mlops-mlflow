@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Dataset artifacts
+*.npy
+*.csv
+*.pkl
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
