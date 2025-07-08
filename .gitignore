@@ -8,9 +8,8 @@ __pycache__/
 mlruns/
 mlflow.db
 
-# Dataset artifacts
+# Model artifacts
 *.npy
-*.csv
 *.pkl
 
 # macOS

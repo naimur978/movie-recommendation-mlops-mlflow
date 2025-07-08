@@ -38,13 +38,7 @@ jobs:
         
     - name: Run tests with pytest
       run: |
-        pytest tests/ --cov=./ --cov-report=xml
-        
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./coverage.xml
-        fail_ci_if_error: true
+        pytest tests/ -v
 
   build-and-validate:
     needs: test
@@ -62,11 +56,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Download dataset
+    - name: Verify dataset
       run: |
-        mkdir -p dataset
-        wget -O dataset/tmdb_5000_movies.csv https://raw.githubusercontent.com/naimur978/movie-recommendation-mlops-mlflow/main/dataset/tmdb_5000_movies.csv
-        wget -O dataset/tmdb_5000_credits.csv https://raw.githubusercontent.com/naimur978/movie-recommendation-mlops-mlflow/main/dataset/tmdb_5000_credits.csv
+        ls -l dataset/
+        echo "Verifying dataset files exist..."
+        test -f dataset/tmdb_5000_movies.csv
+        test -f dataset/tmdb_5000_credits.csv
         
     - name: Train and validate model
       run: |
