@@ -1,33 +1,10 @@
-# Python
+
 __pycache__/
-*.py[cod]
-*.class
+*.pyc
+.env
 .venv/
-
-# MLflow
-mlruns/
-mlflow.db
-
-# Generated files
-models/
-recommendations.csv
-*.npy
-*.pkl
-
-# IDE and OS
-.DS_Store
-.vscode/
-.idea/
-
-# Environment
-*.env
-.python-version
-
-# Generated recommendation files
-*_recommendations.csv
-*_method_comparison.csv
-
-# MLflow files
-mlruns/
-models/
-artifacts/
+venv/
+# Allow screenshots in images/
+!images/SS1.png
+!images/SS2.png
+!images/SS3.png
