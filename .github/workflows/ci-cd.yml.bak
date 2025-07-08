@@ -10,10 +10,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'
         
@@ -25,11 +25,15 @@ jobs:
         python -m nltk.downloader punkt
         python -c "import nltk; nltk.download('punkt')"
         
-    - name: Create dataset directory and dummy files for testing
+    - name: Create test dataset directory and files
       run: |
         mkdir -p dataset
-        echo '{"id":1,"title":"Movie 1"}' > dataset/tmdb_5000_movies.csv
-        echo '{"title":"Movie 1"}' > dataset/tmdb_5000_credits.csv
+        echo 'id,title,genres,keywords,overview,cast,crew
+1,Movie 1,"[{""id"": 1, ""name"": ""Action""}]","[{""id"": 1, ""name"": ""hero""}]",Overview 1,"[{""name"": ""Actor 1""}]","[{""job"": ""Director"", ""name"": ""Director 1""}]"
+2,Movie 2,"[{""id"": 2, ""name"": ""Drama""}]","[{""id"": 2, ""name"": ""family""}]",Overview 2,"[{""name"": ""Actor 2""}]","[{""job"": ""Director"", ""name"": ""Director 2""}]"' > dataset/tmdb_5000_movies.csv
+        echo 'title,cast,crew
+Movie 1,"[{""name"": ""Actor 1""}]","[{""job"": ""Director"", ""name"": ""Director 1""}]"
+Movie 2,"[{""name"": ""Actor 2""}]","[{""job"": ""Director"", ""name"": ""Director 2""}]"' > dataset/tmdb_5000_credits.csv
         
     - name: Lint with flake8
       run: |
@@ -44,10 +48,10 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'
         
@@ -67,6 +71,12 @@ jobs:
       run: |
         python movie_recommender.py
         
+    - name: Start MLflow UI (background)
+      run: |
+        mlflow ui --port 5000 &
+        sleep 5  # Wait for server to start
+        curl -s http://localhost:5000  # Verify server is running
+        
     - name: Upload MLflow artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -78,10 +88,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'
         

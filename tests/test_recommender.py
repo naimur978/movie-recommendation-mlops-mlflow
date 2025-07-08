@@ -54,16 +54,33 @@ def test_preprocess_data(sample_data):
 def test_create_recommendation_model(sample_data):
     movies, credits = sample_data
     cleaned_df = preprocess_data(movies, credits)
-    params = {"max_features": 1000}
-    vectorizer, similarity = create_recommendation_model(cleaned_df, params)
-    assert similarity.shape == (2, 2)
+    params = {
+        "max_features": 1000,
+        "vectorizer_type": "count",
+        "stem_words": True,
+        "remove_stopwords": True,
+        "ngram_range": (1, 1)
+    }
+    vectorizer, cosine_sim, sigmoid_sim = create_recommendation_model(cleaned_df, params)
+    assert cosine_sim.shape == (2, 2)
+    assert sigmoid_sim.shape == (2, 2)
 
 def test_recommend_movies(sample_data):
     movies, credits = sample_data
     cleaned_df = preprocess_data(movies, credits)
-    params = {"max_features": 1000}
-    _, similarity = create_recommendation_model(cleaned_df, params)
-    recommendations = recommend_movies("Movie 1", cleaned_df, similarity, top_n=1)
-    assert len(recommendations) == 1
-    assert 'title' in recommendations[0]
-    assert 'similarity' in recommendations[0]
+    params = {
+        "max_features": 1000,
+        "vectorizer_type": "count",
+        "stem_words": True,
+        "remove_stopwords": True,
+        "ngram_range": (1, 1)
+    }
+    vectorizer, cosine_sim, sigmoid_sim = create_recommendation_model(cleaned_df, params)
+    
+    for method in ['cosine', 'sigmoid', 'hybrid']:
+        recommendations = recommend_movies("Movie 1", cleaned_df, cosine_sim, sigmoid_sim, top_n=1, method=method)
+        assert len(recommendations) == 1
+        assert 'title' in recommendations[0]
+        assert 'similarity' in recommendations[0]
+        assert 'method' in recommendations[0]
+        assert recommendations[0]['method'] == method
