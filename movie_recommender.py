@@ -6,10 +6,11 @@ import time
 import mlflow
 import datetime
 import json
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from nltk.stem.porter import PorterStemmer
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity, sigmoid_kernel
 from pathlib import Path
+from typing import Tuple, List, Dict, Any
 
 # Set up MLflow
 mlflow.set_tracking_uri("file:./mlruns")
@@ -76,29 +77,86 @@ def preprocess_data(movies, credits):
 
     return movies[['id', 'title', 'tag']]
 
-def create_recommendation_model(data, params):
-    """Create and train the recommendation model."""
-    cv = CountVectorizer(max_features=params["max_features"], stop_words='english')
-    vectors = cv.fit_transform(data['tag']).toarray()
+def create_recommendation_model(data: pd.DataFrame, params: Dict[str, Any]) -> Tuple[Any, np.ndarray, np.ndarray]:
+    """Create and train the recommendation model using multiple approaches.
     
+    Args:
+        data: DataFrame containing movie data with tags
+        params: Dictionary containing model parameters
+    
+    Returns:
+        Tuple containing:
+        - Vectorizer (CountVectorizer or TfidfVectorizer)
+        - Cosine similarity matrix
+        - Sigmoid kernel similarity matrix
+    """
+    # Apply stemming
     ps = PorterStemmer()
     data['tags'] = data['tag'].apply(lambda text: " ".join([ps.stem(word) for word in text.split()]))
     
-    similarity = cosine_similarity(vectors)
-    return cv, similarity
+    if params["vectorizer_type"] == "tfidf":
+        # TF-IDF approach
+        vectorizer = TfidfVectorizer(
+            max_features=params["max_features"],
+            stop_words='english',
+            ngram_range=(1, 2)  # Include both unigrams and bigrams
+        )
+    else:
+        # Count vectorizer approach
+        vectorizer = CountVectorizer(
+            max_features=params["max_features"],
+            stop_words='english'
+        )
+    
+    vectors = vectorizer.fit_transform(data['tag'])
+    
+    # Create two types of similarity matrices
+    cosine_sim = cosine_similarity(vectors)
+    sigmoid_sim = sigmoid_kernel(vectors)
+    
+    return vectorizer, cosine_sim, sigmoid_sim
 
-def recommend_movies(movie_title, cleaned_df, similarity_matrix, top_n=5):
-    """Generate movie recommendations."""
+def recommend_movies(
+    movie_title: str,
+    cleaned_df: pd.DataFrame,
+    cosine_sim: np.ndarray,
+    sigmoid_sim: np.ndarray,
+    top_n: int = 5,
+    method: str = 'hybrid'
+) -> List[Dict[str, Any]]:
+    """Generate movie recommendations using multiple similarity measures.
+    
+    Args:
+        movie_title: Title of the movie to base recommendations on
+        cleaned_df: DataFrame containing movie data
+        cosine_sim: Cosine similarity matrix
+        sigmoid_sim: Sigmoid kernel similarity matrix
+        top_n: Number of recommendations to return
+        method: Recommendation method ('cosine', 'sigmoid', or 'hybrid')
+    
+    Returns:
+        List of dictionaries containing recommended movies and their similarity scores
+    """
     try:
         movie_index = cleaned_df[cleaned_df['title'] == movie_title].index[0]
-        distances = similarity_matrix[movie_index]
+        
+        if method == 'cosine':
+            distances = cosine_sim[movie_index]
+        elif method == 'sigmoid':
+            distances = sigmoid_sim[movie_index]
+        else:  # hybrid approach
+            # Combine both similarity measures with weights
+            distances = 0.7 * cosine_sim[movie_index] + 0.3 * sigmoid_sim[movie_index]
+        
+        # Get top N similar movies
         movies_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:top_n+1]
         
         recommendations = []
         for i in movies_list:
             recommendations.append({
                 'title': cleaned_df.iloc[i[0]].title,
-                'similarity': i[1]
+                'similarity': float(i[1]),  # Convert numpy float to Python float for JSON serialization
+                'method': method
             })
         return recommendations
     except IndexError:
@@ -122,61 +180,76 @@ def main():
         mlflow.log_dict(dataset_info, "dataset_info.json")
         mlflow.log_params(DATASET_CONFIG)
         
-        # Model parameters
-        model_params = {
-            "max_features": 5000,
-            "vectorizer": "CountVectorizer",
-            "similarity_metric": "cosine",
-            "stem_words": True,
-            "remove_stopwords": True
-        }
-        mlflow.log_params(model_params)
-        
-        # Preprocess data
-        cleaned_df = preprocess_data(movies, credits)
-        preprocessing_time = time.time() - start_time
-        
-        # Create model
-        model_start_time = time.time()
-        vectorizer, similarity_matrix = create_recommendation_model(cleaned_df, model_params)
-        model_time = time.time() - model_start_time
-        
-        # Log metrics
-        mlflow.log_metrics({
-            "preprocessing_time_seconds": preprocessing_time,
-            "model_creation_time_seconds": model_time,
-            "total_time_seconds": time.time() - start_time,
-            "feature_count": len(vectorizer.get_feature_names_out()),
-            "vocabulary_size": len(vectorizer.vocabulary_)
-        })
-        
-        # Save model artifacts
-        model_path = f"models/model_{mlflow.active_run().info.run_id}"
-        Path(model_path).mkdir(parents=True, exist_ok=True)
-        
-        np.save(f"{model_path}/similarity_matrix.npy", similarity_matrix)
-        pd.to_pickle(vectorizer, f"{model_path}/vectorizer.pkl")
-        
-        with open(f"{model_path}/model_info.json", "w") as f:
-            json.dump({
-                "feature_names": vectorizer.get_feature_names_out().tolist(),
-                "movie_indices": cleaned_df['title'].to_list()
-            }, f)
-        
-        mlflow.log_artifacts(model_path, "model")
-        
-        # Generate example recommendations
-        example_movie = "Avatar"
-        recommendations = recommend_movies(example_movie, cleaned_df, similarity_matrix)
-        
-        # Log recommendations
-        if recommendations:
-            recommendations_df = pd.DataFrame(recommendations)
-            recommendations_df.to_csv("recommendations.csv", index=False)
-            mlflow.log_artifact("recommendations.csv", "recommendations")
+        # Try both vectorizer types
+        for vectorizer_type in ["count", "tfidf"]:
+            # Model parameters
+            model_params = {
+                "max_features": 5000,
+                "vectorizer_type": vectorizer_type,
+                "stem_words": True,
+                "remove_stopwords": True,
+                "ngram_range": (1, 2) if vectorizer_type == "tfidf" else (1, 1)
+            }
+            mlflow.log_params({f"{vectorizer_type}_{k}": v for k, v in model_params.items()})
             
-            for movie in recommendations:
-                print(f"{movie['title']} (similarity: {movie['similarity']:.4f})")
+            # Preprocess data
+            cleaned_df = preprocess_data(movies, credits)
+            preprocessing_time = time.time() - start_time
+            
+            # Create model
+            model_start_time = time.time()
+            vectorizer, cosine_sim, sigmoid_sim = create_recommendation_model(cleaned_df, model_params)
+            model_time = time.time() - model_start_time
+            
+            # Log metrics
+            mlflow.log_metrics({
+                f"{vectorizer_type}_preprocessing_time_seconds": preprocessing_time,
+                f"{vectorizer_type}_model_creation_time_seconds": model_time,
+                f"{vectorizer_type}_total_time_seconds": time.time() - start_time,
+                f"{vectorizer_type}_feature_count": len(vectorizer.get_feature_names_out()),
+                f"{vectorizer_type}_vocabulary_size": len(vectorizer.vocabulary_)
+            })
+            
+            # Save model artifacts
+            model_path = f"models/model_{vectorizer_type}_{mlflow.active_run().info.run_id}"
+            Path(model_path).mkdir(parents=True, exist_ok=True)
+            
+            np.save(f"{model_path}/cosine_similarity.npy", cosine_sim)
+            np.save(f"{model_path}/sigmoid_similarity.npy", sigmoid_sim)
+            pd.to_pickle(vectorizer, f"{model_path}/vectorizer.pkl")
+            
+            with open(f"{model_path}/model_info.json", "w") as f:
+                json.dump({
+                    "feature_names": vectorizer.get_feature_names_out().tolist(),
+                    "movie_indices": cleaned_df['title'].to_list()
+                }, f)
+            
+            mlflow.log_artifacts(model_path, f"model_{vectorizer_type}")
+            
+            # Generate example recommendations using different methods
+            example_movie = "Avatar"
+            for method in ['cosine', 'sigmoid', 'hybrid']:
+                recommendations = recommend_movies(
+                    example_movie,
+                    cleaned_df,
+                    cosine_sim,
+                    sigmoid_sim,
+                    top_n=5,
+                    method=method
+                )
+                
+                # Log recommendations
+                if recommendations:
+                    recommendations_df = pd.DataFrame(recommendations)
+                    recommendations_df.to_csv(f"{vectorizer_type}_{method}_recommendations.csv", index=False)
+                    mlflow.log_artifact(
+                        f"{vectorizer_type}_{method}_recommendations.csv",
+                        f"recommendations/{vectorizer_type}"
+                    )
+                    
+                    print(f"\nRecommendations using {vectorizer_type} vectorizer and {method} method:")
+                    for movie in recommendations:
+                        print(f"{movie['title']} (similarity: {movie['similarity']:.4f})")
 
 if __name__ == "__main__":
     main()
