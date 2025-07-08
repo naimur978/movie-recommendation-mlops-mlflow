@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import mlflow
@@ -44,6 +45,15 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Sample data for demonstration when actual data is not available
 SAMPLE_MOVIES = [
     {"title": "Avatar", "overview": "A paraplegic marine dispatched to the moon Pandora on a unique mission."},
@@ -62,18 +72,39 @@ SAMPLE_RECOMMENDATIONS = [
 ]
 
 # Load the model and data at startup
+import os
+print("Current working directory:", os.getcwd())
+print("Checking if data files exist:")
+print("movies.csv exists:", os.path.exists('dataset/tmdb_5000_movies.csv'))
+print("credits.csv exists:", os.path.exists('dataset/tmdb_5000_credits.csv'))
+print("recommendations.csv exists:", os.path.exists('count_cosine_recommendations.csv'))
+
 try:
     # Try to load actual datasets
     movies_df = pd.read_csv('dataset/tmdb_5000_movies.csv')
+    print("Successfully loaded movies dataset")
+    
     credits_df = pd.read_csv('dataset/tmdb_5000_credits.csv')
-    recommendations_df = pd.read_csv('count_cosine_recommendations.csv')
+    print("Successfully loaded credits dataset")
+    
+    recommendations_df = pd.read_csv('dataset/count_cosine_recommendations.csv')
+    print("Successfully loaded recommendations dataset")
     
     # Set flags to True if data is loaded successfully
     DATA_LOADED = True
     MODEL_LOADED = True
     print("Production data loaded successfully")
 except Exception as e:
-    print(f"Using sample data due to: {e}")
+    print(f"Error loading production data: {str(e)}")
+    print("Directory contents:")
+    try:
+        print("Root directory:", os.listdir('.'))
+        if os.path.exists('dataset'):
+            print("Dataset directory:", os.listdir('dataset'))
+    except Exception as list_error:
+        print(f"Error listing directory: {str(list_error)}")
+    
+    print("Falling back to sample data")
     # Use sample data if files are not available
     movies_df = pd.DataFrame(SAMPLE_MOVIES)
     recommendations_df = pd.DataFrame(SAMPLE_RECOMMENDATIONS)

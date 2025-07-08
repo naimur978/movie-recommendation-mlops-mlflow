@@ -1,0 +1,6 @@
+title,similarity,method
+Star Trek Into Darkness,0.32824397594488736,cosine
+Titan A.E.,0.3198010745334157,cosine
+Aliens,0.2909286827258562,cosine
+Guardians of the Galaxy,0.28603877677367767,cosine
+The Lovers,0.2631806779839076,cosine
