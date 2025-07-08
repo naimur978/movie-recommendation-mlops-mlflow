@@ -1,6 +1,20 @@
 # Movie Recommendation System with MLflow
 
-This project implements a content-based movie recommendation system using TMDB dataset, with MLflow for experiment tracking and model management.
+This project implements a content-based movie recommendation system using TMDB dataset, with MLflow for experiment tracking and model management. The system is deployed as a FastAPI service.
+
+## Live Demo
+
+API Endpoint: https://movie-recommendation-mlops-mlflow.onrender.com
+
+- API Documentation (Swagger UI): https://movie-recommendation-mlops-mlflow.onrender.com/docs
+- Alternative Documentation (ReDoc): https://movie-recommendation-mlops-mlflow.onrender.com/redoc
+
+## API Endpoints
+
+- `GET /` - Welcome endpoint with API information
+- `GET /health` - Health check endpoint
+- `GET /movies` - List available movies (with pagination)
+- `GET /recommend` - Get movie recommendations
 
 ## Features
 
@@ -14,6 +28,11 @@ This project implements a content-based movie recommendation system using TMDB d
   - Parameter logging
   - Metric monitoring
   - Artifact management
+- FastAPI implementation for:
+  - RESTful API endpoints
+  - Interactive documentation
+  - Data validation
+  - Error handling
 - Text processing with:
   - CountVectorizer
   - Porter Stemming
@@ -69,10 +88,33 @@ The project tracks:
 ```
 ├── dataset/
 │   ├── tmdb_5000_movies.csv
-│   └── tmdb_5000_credits.csv
+│   ├── tmdb_5000_credits.csv
+│   └── count_cosine_recommendations.csv
 ├── models/
 ├── artifacts/
-├── movie-recommender-using-vectorization.py
+├── app.py
+├── movie-recommender-using-vectorization.ipynb
+├── requirements.txt
 ├── README.md
 └── .gitignore
+```
+
+## API Usage Examples
+
+### Get Movie Recommendations
+
+```bash
+curl "https://movie-recommendation-mlops-mlflow.onrender.com/recommend?movie_title=Avatar&num_recommendations=5"
+```
+
+### List Available Movies
+
+```bash
+curl "https://movie-recommendation-mlops-mlflow.onrender.com/movies?limit=10&skip=0"
+```
+
+### Check API Health
+
+```bash
+curl "https://movie-recommendation-mlops-mlflow.onrender.com/health"
 ```
