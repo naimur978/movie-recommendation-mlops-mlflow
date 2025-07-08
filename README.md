@@ -1,6 +1,6 @@
 # Movie Recommendation System with MLflow
 
-This project implements a movie recommendation system using content-based filtering, with MLflow for experiment tracking and model management.
+This project implements a content-based movie recommendation system using TMDB dataset, with MLflow for experiment tracking and model management.
 
 ## Features
 
