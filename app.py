@@ -44,13 +44,13 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Sample data for demonstration
+# Sample data for demonstration when actual data is not available
 SAMPLE_MOVIES = [
     {"title": "Avatar", "overview": "A paraplegic marine dispatched to the moon Pandora on a unique mission."},
     {"title": "Star Trek Into Darkness", "overview": "After the crew of the Enterprise find an unstoppable force of terror from within their own organization."},
     {"title": "Inception", "overview": "A thief who steals corporate secrets through the use of dream-sharing technology."},
-    {"title": "The Dark Knight", "overview": "Batman raises the stakes in his war on crime."},
-    {"title": "Interstellar", "overview": "A team of explorers travel through a wormhole in space."}
+    {"title": "The Dark Knight", "overview": "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice."},
+    {"title": "Interstellar", "overview": "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival."}
 ]
 
 SAMPLE_RECOMMENDATIONS = [
