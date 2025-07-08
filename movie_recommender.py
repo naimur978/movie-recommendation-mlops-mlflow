@@ -224,10 +224,10 @@ def main():
                     "movie_indices": cleaned_df['title'].to_list()
                 }, f)
             
-            mlflow.log_artifacts(model_path, f"model_{vectorizer_type}")
-            
-            # Generate example recommendations using different methods
+            mlflow.log_artifacts(model_path, f"model_{vectorizer_type}")                # Generate example recommendations using different methods
             example_movie = "Avatar"
+            method_metrics = {}
+            
             for method in ['cosine', 'sigmoid', 'hybrid']:
                 recommendations = recommend_movies(
                     example_movie,
@@ -238,18 +238,66 @@ def main():
                     method=method
                 )
                 
-                # Log recommendations
+                # Log recommendations and calculate metrics
                 if recommendations:
                     recommendations_df = pd.DataFrame(recommendations)
+                    
+                    # Calculate metrics for this method
+                    avg_similarity = recommendations_df['similarity'].mean()
+                    max_similarity = recommendations_df['similarity'].max()
+                    min_similarity = recommendations_df['similarity'].min()
+                    
+                    # Log method-specific metrics
+                    mlflow.log_metrics({
+                        f"{vectorizer_type}_{method}_avg_similarity": avg_similarity,
+                        f"{vectorizer_type}_{method}_max_similarity": max_similarity,
+                        f"{vectorizer_type}_{method}_min_similarity": min_similarity
+                    })
+                    
+                    # Save recommendations to CSV
                     recommendations_df.to_csv(f"{vectorizer_type}_{method}_recommendations.csv", index=False)
                     mlflow.log_artifact(
                         f"{vectorizer_type}_{method}_recommendations.csv",
                         f"recommendations/{vectorizer_type}"
                     )
                     
+                    # Store metrics for comparison
+                    method_metrics[method] = {
+                        'avg_similarity': avg_similarity,
+                        'max_similarity': max_similarity,
+                        'min_similarity': min_similarity,
+                        'recommendations': recommendations
+                    }
+                    
                     print(f"\nRecommendations using {vectorizer_type} vectorizer and {method} method:")
+                    print(f"Average similarity: {avg_similarity:.4f}")
                     for movie in recommendations:
                         print(f"{movie['title']} (similarity: {movie['similarity']:.4f})")
+            
+            # Log comparative metrics
+            best_method = max(method_metrics.items(), key=lambda x: x[1]['avg_similarity'])[0]
+            mlflow.log_param(f"{vectorizer_type}_best_method", best_method)
+            
+            # Create and log a comparison report
+            comparison_data = {
+                'method': [],
+                'avg_similarity': [],
+                'max_similarity': [],
+                'min_similarity': []
+            }
+            
+            for method, metrics in method_metrics.items():
+                comparison_data['method'].append(method)
+                comparison_data['avg_similarity'].append(metrics['avg_similarity'])
+                comparison_data['max_similarity'].append(metrics['max_similarity'])
+                comparison_data['min_similarity'].append(metrics['min_similarity'])
+            
+            comparison_df = pd.DataFrame(comparison_data)
+            comparison_df.to_csv(f"{vectorizer_type}_method_comparison.csv", index=False)
+            mlflow.log_artifact(
+                f"{vectorizer_type}_method_comparison.csv",
+                f"comparisons/{vectorizer_type}"
+            )
 
 if __name__ == "__main__":
     main()

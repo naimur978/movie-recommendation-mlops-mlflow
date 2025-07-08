@@ -22,3 +22,12 @@ recommendations.csv
 # Environment
 *.env
 .python-version
+
+# Generated recommendation files
+*_recommendations.csv
+*_method_comparison.csv
+
+# MLflow files
+mlruns/
+models/
+artifacts/
