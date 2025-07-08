@@ -67,6 +67,12 @@ jobs:
       run: |
         python movie_recommender.py
         
+    - name: Start MLflow UI (background)
+      run: |
+        mlflow ui --port 5000 &
+        sleep 5  # Wait for server to start
+        curl -s http://localhost:5000  # Verify server is running
+        
     - name: Upload MLflow artifacts
       uses: actions/upload-artifact@v4
       with:
