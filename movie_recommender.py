@@ -27,6 +27,11 @@ DATASET_CONFIG = {
     "top_cast_members": 3
 }
 
+# Modify paths for testing environment
+if os.getenv('TEST_MODE') == 'true':
+    DATASET_CONFIG["movies_path"] = "./dataset/test_movies.csv"
+    DATASET_CONFIG["credits_path"] = "./dataset/test_credits.csv"
+
 def load_data():
     """Load and preprocess the movie datasets."""
     movies = pd.read_csv(DATASET_CONFIG["movies_path"])

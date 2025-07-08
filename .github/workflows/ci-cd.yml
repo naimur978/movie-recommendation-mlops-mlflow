@@ -22,6 +22,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-cov flake8
+        python -m nltk.downloader punkt
+        python -c "import nltk; nltk.download('punkt')"
+        
+    - name: Create dataset directory and dummy files for testing
+      run: |
+        mkdir -p dataset
+        echo '{"id":1,"title":"Movie 1"}' > dataset/tmdb_5000_movies.csv
+        echo '{"title":"Movie 1"}' > dataset/tmdb_5000_credits.csv
         
     - name: Lint with flake8
       run: |

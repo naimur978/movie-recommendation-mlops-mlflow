@@ -4,9 +4,13 @@ import numpy as np
 from pathlib import Path
 import sys
 import os
+import json
 
 # Add the parent directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Mock dataset paths for testing
+os.environ['TEST_MODE'] = 'true'
 
 from movie_recommender import (
     load_data,
