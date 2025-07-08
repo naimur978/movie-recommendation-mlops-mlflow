@@ -28,12 +28,11 @@ def sample_data():
         'title': ['Movie 1', 'Movie 2'],
         'genres': ['[{"id": 1, "name": "Action"}]', '[{"id": 2, "name": "Drama"}]'],
         'keywords': ['[{"id": 1, "name": "hero"}]', '[{"id": 2, "name": "family"}]'],
-        'overview': ['Overview 1', 'Overview 2'],
-        'cast': ['[{"name": "Actor 1"}]', '[{"name": "Actor 2"}]'],
-        'crew': ['[{"job": "Director", "name": "Director 1"}]', '[{"job": "Director", "name": "Director 2"}]']
+        'overview': ['Overview 1', 'Overview 2']
     })
     
     credits = pd.DataFrame({
+        'movie_id': [1, 2],
         'title': ['Movie 1', 'Movie 2'],
         'cast': ['[{"name": "Actor 1"}]', '[{"name": "Actor 2"}]'],
         'crew': ['[{"job": "Director", "name": "Director 1"}]', '[{"job": "Director", "name": "Director 2"}]']
